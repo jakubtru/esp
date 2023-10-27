@@ -1,22 +1,4 @@
-/* WiFi station with ping
-
-	 This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-	 Unless required by applicable law or agreed to in writing, this
-	 software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-	 CONDITIONS OF ANY KIND, either express or implied.
-*/
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "nvs_flash.h"
-#include "mdns.h"
-
-#include "ping.h"
+#include "wifi.h"
 
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
@@ -27,14 +9,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
-static const char *TAG = "main";
-
-#if 0
-/* target_host is www.espressif.com */
-//char *TARGET_HOST = "www.espressif.com";
-/* target_host is own gateway */
-//char *TARGET_HOST = "";
-#endif
+static const char *TAG = "wifi";
 
 static int s_retry_num = 0;
 
@@ -58,6 +33,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 		xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 	}
 }
+
 
 esp_err_t wifi_init_sta()
 {
@@ -112,40 +88,4 @@ esp_err_t wifi_init_sta()
 	ESP_LOGI(TAG, "connect to ap SSID:%s", CONFIG_ESP_WIFI_SSID);
 	vEventGroupDelete(s_wifi_event_group);
 	return ret_value;
-}
-
-void app_main()
-{
-	// Initialize NVS
-	esp_err_t ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-		ESP_ERROR_CHECK(nvs_flash_erase());
-		ret = nvs_flash_init();
-	}
-	ESP_ERROR_CHECK(ret);
-
-	// Initialize WiFi
-	if (wifi_init_sta() != ESP_OK) {
-		ESP_LOGE(TAG, "Connection failed");
-		while(1) { vTaskDelay(1); }
-	}
-
-#if CONFIG_TARGET_OWN_GATEWAY
-	char *TARGET_HOST = "";
-	ESP_LOGI(TAG, "target host is own gateway");
-#endif
-#if CONFIG_TARGET_ESPRESSIF
-	char *TARGET_HOST = "www.espressif.com";
-	ESP_LOGI(TAG, "target host is www.espressif.com");
-#endif
-#if CONFIG_TARGET_ANY
-	char *TARGET_HOST = CONFIG_PING_TARGET;
-	ESP_LOGI(TAG, "target host is %s", CONFIG_PING_TARGET);
-#endif
-
-	if (initialize_ping(1000, 2, TARGET_HOST) == ESP_OK) {
-		ESP_LOGI(TAG, "initialize_ping success");
-	} else {
-		ESP_LOGE(TAG, "initialize_ping fail");
-	}
 }

@@ -7,6 +7,7 @@
             "cStandard": "c17",
             "includePath": [
                 "${default}",
+                "${workspaceFolder}/main",
                 "C:/Espressif/frameworks/esp-idf-v5.1.1/components/freertos/FreeRTOS-Kernel-SMP/include",
                 "C:/Espressif/frameworks/esp-idf-v5.1.1/components/freertos/esp_additions/include/freertos",
                 "C:/Espressif/frameworks/esp-idf-v5.1.1/components/esp_wifi/include",
