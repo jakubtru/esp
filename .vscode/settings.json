@@ -13,6 +13,7 @@
         "opt.h": "c",
         "lwipopts.h": "c",
         "debug.h": "c",
-        "ssd1306.h": "c"
+        "ssd1306.h": "c",
+        "task.h": "c"
     },
 }
