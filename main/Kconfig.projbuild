@@ -44,4 +44,11 @@ menu "Application Configuration"
 		help
 			Ping target IP address or mDNS hostname.
 
+
+    config BUTTON_PIN
+        int "Pin for the control button"
+        default 27
+        help
+            Pin where the button is connected (pullup)
+
 endmenu
