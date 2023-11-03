@@ -13,7 +13,7 @@ to jest pinout ktorego ja uzywam, mozna go zmieniac przez config
 uwaga na pin przycisku, pin musi obslugiwac pullup
 
 https://asciiflow.com
-
+```
         ┌────────────────┐
         │EN           D23│
         │VP              │
@@ -42,7 +42,7 @@ https://asciiflow.com
    │                                   │
    │                                   │
    └───────────────────────────────────┘
-
+```
 # OLED
 https://esp32tutorials.com/oled-esp32-esp-idf-tutorial/
 
