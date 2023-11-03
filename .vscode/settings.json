@@ -16,6 +16,7 @@
         "ssd1306.h": "c",
         "task.h": "c",
         "wifi.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "oled.h": "c"
     },
 }

@@ -20,12 +20,17 @@ void init_display(void) {
 
     #if CONFIG_FLIP
 	dev._flip = true;
-	ESP_LOGW(tag, "Flip upside down");
+	ESP_LOGI(tag, "Display flipped upside down");
     #endif
 
 	ssd1306_init(&dev, 128, 64); // Resolution
 	ssd1306_clear_screen(&dev, false);
 	ssd1306_contrast(&dev, 0xff); // Sets brightness
+}
+
+void display_text(int line, char const* text) {
+    ssd1306_display_text(&dev, line, text, strlen(text), false);
+    // ssd1306_display_text_x3 robi wieksza czcionke (na kilka linii)
 }
 
 void dotstuff(void)
