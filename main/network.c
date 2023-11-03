@@ -1,5 +1,15 @@
 #include "network.h"
 
+#include "esp_system.h"
+#include "esp_http_client.h"
+#include "esp_log.h"
+#include "nvs_flash.h"
+#include "mdns.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "esp_wifi.h"
+
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -9,7 +19,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 
-static const char *TAG = "wifi";
+static char const *TAG = "net";
 
 static int s_retry_num = 0;
 
@@ -88,4 +98,89 @@ esp_err_t wifi_init_sta()
 	ESP_LOGI(TAG, "connect to ap SSID:%s", CONFIG_ESP_WIFI_SSID);
 	vEventGroupDelete(s_wifi_event_group);
 	return ret_value;
+}
+
+typedef struct {
+    char* buffer;
+    int length;
+} http_response_t;
+
+static http_response_t http_response;
+
+esp_err_t http_event_handler(esp_http_client_event_t *evt)
+{
+    switch(evt->event_id) {
+        case HTTP_EVENT_ERROR:
+            ESP_LOGD(TAG, "HTTP_EVENT_ERROR");
+            break;
+        case HTTP_EVENT_ON_CONNECTED:
+            ESP_LOGD(TAG, "HTTP_EVENT_ON_CONNECTED");
+            break;
+        case HTTP_EVENT_HEADER_SENT:
+            ESP_LOGD(TAG, "HTTP_EVENT_HEADER_SENT");
+            break;
+        case HTTP_EVENT_ON_HEADER:
+            ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER");
+            printf("%.*s", evt->data_len, (char*)evt->data);
+            break;
+        case HTTP_EVENT_ON_DATA:
+            // NOTE jesli cos nie dziala z http, moze trzeba bedzie doimplementowac obsluge chunkow
+            if (!esp_http_client_is_chunked_response(evt->client)) {
+                // Allocate or reallocate memory for the buffer depending on if it has already been used
+                http_response.buffer = realloc(http_response.buffer, http_response.length + evt->data_len);
+                if (http_response.buffer == NULL) {
+                    ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
+                    return ESP_FAIL;
+                }
+
+                // Append the received data to the buffer
+                memcpy(http_response.buffer + http_response.length, evt->data, evt->data_len);
+                http_response.length += evt->data_len;
+            }
+            break;
+        case HTTP_EVENT_ON_FINISH:
+            ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
+            break;
+        case HTTP_EVENT_DISCONNECTED:
+            ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
+            break;
+        default:
+            ESP_LOGW(TAG, "another event. event_id: %i", evt->event_id);
+            break;
+    }
+    return ESP_OK;
+}
+
+char* http_get(char const* url)
+{
+    esp_http_client_config_t config = {
+        .url = url,
+        .event_handler = http_event_handler,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+
+    http_response.buffer = NULL;
+    http_response.length = 0;
+
+    // Performing the request
+    esp_err_t err = esp_http_client_perform(client);
+
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %lld",
+                 esp_http_client_get_status_code(client),
+                 esp_http_client_get_content_length(client));
+    } else {
+        ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
+    }
+
+    esp_http_client_cleanup(client);
+
+    if (http_response.buffer) {
+        http_response.buffer = realloc(http_response.buffer, http_response.length + 1);
+        if (http_response.buffer) {
+            http_response.buffer[http_response.length] = '\0'; // Null-terminate the buffer
+        }
+    }
+
+    return http_response.buffer;
 }
