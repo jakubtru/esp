@@ -10,32 +10,31 @@
 
 #define tag "SSD1306"
 
-void app_main(void)
-{
-	SSD1306_t dev;
-	int center, top, bottom;
-	char lineChar[20];
+static SSD1306_t dev;
 
-#if CONFIG_I2C_INTERFACE
-	ESP_LOGI(tag, "INTERFACE is i2c");
+void init_display(void) {
 	ESP_LOGI(tag, "CONFIG_SDA_GPIO=%d",CONFIG_SDA_GPIO);
 	ESP_LOGI(tag, "CONFIG_SCL_GPIO=%d",CONFIG_SCL_GPIO);
 	ESP_LOGI(tag, "CONFIG_RESET_GPIO=%d",CONFIG_RESET_GPIO);
 	i2c_master_init(&dev, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
-#endif
 
-#if CONFIG_FLIP
+    #if CONFIG_FLIP
 	dev._flip = true;
 	ESP_LOGW(tag, "Flip upside down");
-#endif
+    #endif
 
-	ESP_LOGI(tag, "Panel is 128x64");
-	ssd1306_init(&dev, 128, 64);
-
+	ssd1306_init(&dev, 128, 64); // Resolution
 	ssd1306_clear_screen(&dev, false);
 	ssd1306_contrast(&dev, 0xff); // Sets brightness
+}
+
+void dotstuff(void)
+{
+    init_display();
     // ssd1306_display_text_x3(&dev, 0, "Hello", 5, false);
     // vTaskDelay(3000 / portTICK_PERIOD_MS);
+	char lineChar[20];
+	int center, top, bottom;
 
 	top = 2;
 	center = 3;
