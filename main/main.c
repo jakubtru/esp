@@ -31,19 +31,10 @@ void app_main()
 	ESP_ERROR_CHECK(ret);
 
     init_display();
-    {
-        int l = 0;
-        display_text(l++, "     /\\");
-        display_text(l++, "     \\/");
-        display_text(l++, " --(.)(.)--");
-        display_text(l++, "     ##");
-        display_text(l++, "     ##");
-        display_text(l++, "     ##");
-        display_text(l++, "    /  \\");
-        display_text(l++, "   /    \\");
-    }
 
     init_button();
+
+    display_text(0, "Connecting...");
 
 	// Initialize WiFi
 	if (wifi_init_sta() != ESP_OK) {
