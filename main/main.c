@@ -52,8 +52,10 @@ void app_main()
     ESP_LOGI(TAG, "Received response: %s", response);
     display_text(1, "Response:");
     display_text(2, response);
+    free(response);
 
     int prevButton = true;
+    int prevWifi = true;
     while(1) {
         char buffer[20];
         int button = button_pressed();
@@ -66,14 +68,17 @@ void app_main()
             char const* response = http_get("http://192.168.137.1:3000/ping");
             ESP_LOGI(TAG, "Received response: %s", response);
             display_text(2, response);
+            free(response);
         }
 
         connected = is_wifi_connected();
-        if (!connected) {
-            display_text(0, "DISCONNECTED: " CONFIG_ESP_WIFI_SSID);
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            esp_restart();
+        if (!connected && prevWifi) {
+            display_text(0, "DISCONNECTED");
         }
+        else if (connected && !prevWifi) {
+            display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+        }
+        prevWifi = connected;
 
         vTaskDelay(pdMS_TO_TICKS(250));
     }
