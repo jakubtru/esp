@@ -100,34 +100,6 @@ esp_err_t wifi_init_sta()
 	return ret_value;
 }
 
-esp_err_t wifi_reconnect() {
-	ESP_LOGI(TAG, "Attempting to reconnect to WiFi network");
-
-    // Stop the WiFi driver
-    ESP_ERROR_CHECK(esp_wifi_stop());
-
-    // Start the WiFi driver again
-    ESP_ERROR_CHECK(esp_wifi_start());
-
-    // Wait for a while to give the ESP time to connect
-    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
-                                           WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-                                           pdFALSE,        // xClearOnExit
-                                           pdFALSE,        // xWaitForAllBits
-                                           portMAX_DELAY);
-
-    if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "Reconnected to WiFi network successfully");
-        return ESP_OK;
-    } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGE(TAG, "Failed to reconnect to WiFi network");
-        return ESP_FAIL;
-    } else {
-        ESP_LOGE(TAG, "Unexpected WiFi event during reconnection");
-        return ESP_ERR_INVALID_STATE;
-    }
-}
-
 typedef struct {
     char* buffer;
     int length;

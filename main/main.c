@@ -56,7 +56,9 @@ void app_main()
 
     int prevButton = true;
     int prevWifi = true;
+    int i = 0;
     while(1) {
+        ++i;
         char buffer[20];
         int button = button_pressed();
         if (button != prevButton) {
@@ -71,14 +73,17 @@ void app_main()
             free(response);
         }
 
-        connected = is_wifi_connected();
-        if (!connected && prevWifi) {
-            display_text(0, "DISCONNECTED");
+        if (i == 5) {
+            connected = is_wifi_connected();
+            if (!connected && prevWifi) {
+                display_text(0, "DISCONNECTED");
+            }
+            else if (connected && !prevWifi) {
+                display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+            }
+            prevWifi = connected;
+            i = 0;
         }
-        else if (connected && !prevWifi) {
-            display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
-        }
-        prevWifi = connected;
 
         vTaskDelay(pdMS_TO_TICKS(250));
     }
