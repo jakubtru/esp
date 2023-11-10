@@ -7,3 +7,5 @@ Return content
 Caller is responsible for freeing the returned memory
 */
 char* http_get(char const* url);
+
+int is_wifi_connected();

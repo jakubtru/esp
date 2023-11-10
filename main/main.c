@@ -54,6 +54,11 @@ void app_main()
         char buffer[20];
         sprintf(buffer, "Button: %d", button_pressed());
         display_text(3, buffer);
+
+        if (!is_wifi_connected()) {
+            esp_restart();
+        }
+
         vTaskDelay(pdMS_TO_TICKS(250));
     }
 }

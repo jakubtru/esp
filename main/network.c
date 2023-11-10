@@ -151,6 +151,15 @@ esp_err_t http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+int is_wifi_connected() {
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        return true; // WiFi is connected
+    } else {
+        return false; // WiFi is not connected
+    }
+}
+
 char* http_get(char const* url)
 {
     esp_http_client_config_t config = {
