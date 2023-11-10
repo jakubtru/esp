@@ -66,7 +66,7 @@ void app_main()
             display_text(3, buffer);
         }
         prevButton = button;
-        if (button) {
+        if (button && connected) {
             char const* response = http_get("http://192.168.137.1:3000/ping");
             ESP_LOGI(TAG, "Received response: %s", response);
             display_text(2, response);
