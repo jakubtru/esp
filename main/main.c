@@ -22,6 +22,8 @@ void mainloop(void);
 
 void app_main()
 {
+    int connected = false;
+
     // Initialize NVS // Non Volatile Storage => storage that persists when power goes off
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -43,19 +45,33 @@ void app_main()
 		while(1) { vTaskDelay(1); }
 	}
     display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+    connected = true;
 
-    char const* response = http_get("http://192.168.137.1:3000/ping");
+    // char const* response = http_get("http://192.168.137.1:3000/ping");
+    char const* response = http_get("http://example.com");
     ESP_LOGI(TAG, "Received response: %s", response);
     display_text(1, "Response:");
     display_text(2, response);
 
-
+    int prevButton = true;
     while(1) {
         char buffer[20];
-        sprintf(buffer, "Button: %d", button_pressed());
-        display_text(3, buffer);
+        int button = button_pressed();
+        if (button != prevButton) {
+            sprintf(buffer, "Button: %d", button);
+            display_text(3, buffer);
+        }
+        prevButton = button;
+        if (button) {
+            char const* response = http_get("http://192.168.137.1:3000/ping");
+            ESP_LOGI(TAG, "Received response: %s", response);
+            display_text(2, response);
+        }
 
-        if (!is_wifi_connected()) {
+        connected = is_wifi_connected();
+        if (!connected) {
+            display_text(0, "DISCONNECTED: " CONFIG_ESP_WIFI_SSID);
+            vTaskDelay(pdMS_TO_TICKS(5000));
             esp_restart();
         }
 

@@ -29,6 +29,7 @@ void init_display(void) {
 }
 
 void display_text(int line, char const* text) {
+    ssd1306_clear_line(&dev, line, false);
     ssd1306_display_text(&dev, line, text, strlen(text), false);
     // ssd1306_display_text_x3 robi wieksza czcionke (na kilka linii)
 }
