@@ -22,13 +22,19 @@ static EventGroupHandle_t s_wifi_event_group;
 static char const *TAG = "net";
 
 static int s_retry_num = 0;
+static bool connected = false;
+
+bool is_wifi_connected(void) {
+    return connected;
+}
 
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data)
 {
 	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
 		esp_wifi_connect();
 	} else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-		if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY) {
+		connected = false;
+        if (s_retry_num < CONFIG_ESP_MAXIMUM_RETRY) {
 			esp_wifi_connect();
 			s_retry_num++;
 			ESP_LOGI(TAG, "retry to connect to the AP");
@@ -38,6 +44,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 		ESP_LOGI(TAG,"connect to the AP fail");
 	} else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
 		ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        connected = true;
 		ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
 		s_retry_num = 0;
 		xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
@@ -149,15 +156,6 @@ esp_err_t http_event_handler(esp_http_client_event_t *evt)
             break;
     }
     return ESP_OK;
-}
-
-int is_wifi_connected() {
-    wifi_ap_record_t ap_info;
-    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-        return true; // WiFi is connected
-    } else {
-        return false; // WiFi is not connected
-    }
 }
 
 char* http_get(char const* url)

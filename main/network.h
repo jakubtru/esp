@@ -1,11 +1,14 @@
 #include "esp_err.h"
+#include <stdbool.h>
 
 esp_err_t wifi_init_sta();
 
-/* Perform HTTP GET
-Return content
+/*
+Performs HTTP GET
+Returns content
 Caller is responsible for freeing the returned memory
 */
 char* http_get(char const* url);
 
-int is_wifi_connected();
+// Making this a function so underlying bool is inaccessible outside network.c
+bool is_wifi_connected();

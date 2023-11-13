@@ -48,7 +48,7 @@ void app_main()
     connected = true;
 
     // char const* response = http_get("http://192.168.137.1:3000/ping");
-    char const* response = http_get("http://example.com");
+    char* response = http_get("http://example.com");
     ESP_LOGI(TAG, "Received response: %s", response);
     display_text(1, "Response:");
     display_text(2, response);
@@ -57,34 +57,37 @@ void app_main()
     int prevButton = true;
     int prevWifi = true;
     int i = 0;
+    int counter = 0;
     while(1) {
         ++i;
         char buffer[20];
         int button = button_pressed();
+        connected = is_wifi_connected();
+
         if (button != prevButton) {
-            sprintf(buffer, "Button: %d", button);
+            if (button) {
+                ++counter;
+                if (button && connected) {
+                    char* response = http_get("http://192.168.137.1:3000/ping");
+                    ESP_LOGI(TAG, "Received response: %s", response);
+                    display_text(2, response);
+                    free(response);
+                }
+            }
+            sprintf(buffer, "Button: %d", counter);
             display_text(3, buffer);
         }
         prevButton = button;
-        if (button && connected) {
-            char const* response = http_get("http://192.168.137.1:3000/ping");
-            ESP_LOGI(TAG, "Received response: %s", response);
-            display_text(2, response);
-            free(response);
-        }
 
-        if (i == 5) {
-            connected = is_wifi_connected();
-            if (!connected && prevWifi) {
-                display_text(0, "DISCONNECTED");
-            }
-            else if (connected && !prevWifi) {
-                display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
-            }
-            prevWifi = connected;
-            i = 0;
+        if (!connected && prevWifi) {
+            display_text(0, "DISCONNECTED");
         }
+        else if (connected && !prevWifi) {
+            display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+        }
+        prevWifi = connected;
+        i = 0;
 
-        vTaskDelay(pdMS_TO_TICKS(250));
+        vTaskDelay(pdMS_TO_TICKS(25));
     }
 }

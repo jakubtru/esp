@@ -27,6 +27,6 @@ void init_button(void)
 
 int button_pressed(void) {
     int level = !gpio_get_level(CONFIG_BUTTON_PIN); // negating because it returned 1 for unpressed button
-    ESP_LOGI("gpio", "GPIO [%d] level: %d", CONFIG_BUTTON_PIN, level);
+    // ESP_LOGI("gpio", "GPIO [%d] level: %d", CONFIG_BUTTON_PIN, level);
     return level;
 }
