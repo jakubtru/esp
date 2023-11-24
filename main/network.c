@@ -177,8 +177,10 @@ char* http_get(char const* url)
     http_response.buffer = NULL;
     http_response.length = 0;
 
+    ESP_LOGI(TAG, "Perform");
     // Performing the request
     esp_err_t err = esp_http_client_perform(client);
+    ESP_LOGI(TAG, "Performed");
 
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %lld",
@@ -202,8 +204,9 @@ char* http_get(char const* url)
 
 void task_http_get(http_rq_rs* arg)
 {
+    arg->state = STARTED;
     arg->rs_data = http_get(arg->url);
-    arg->finished = true;
+    arg->state = FINISHED;
     ESP_LOGI(TAG, "Received response: %s", arg->rs_data);
     vTaskDelete(NULL);
 }

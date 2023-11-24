@@ -26,41 +26,26 @@ void app_main()
     init();
     wifi_sanity_check();
 
-    int prevButton = true;
     int prevWifi = true;
-    int i = 0;
-    int counter = 0;
     http_rq_rs http_ping = {
         .url = "init",
-        .finished = false,
+        .state = IDLE
     };
-    bool doing_http = false;
 
     while(1) {
-        ++i;
-        char buffer[20];
-        int button = button_pressed();
-
-        if (doing_http && http_ping.finished) {
+        if (http_ping.state == FINISHED) {
             display_text(2, http_ping.rs_data);
             free(http_ping.rs_data);
-            doing_http = false;
+            http_ping.state = IDLE;
         }
 
-        if (button != prevButton) {
-            if (button) {
-                ++counter;
-                if (button && is_wifi_connected()) {
-                    http_ping.url = "http://iot-server.glitch.me/ping";
-                    http_ping.finished = false;
-                    doing_http = true;
-                    xTaskCreate(task_http_get, "Trying tasks", 4096, &http_ping, 10, NULL);
-                }
+        if (button_just_pressed()) {
+            ESP_LOGI(TAG, "Button pressed");
+            if (is_wifi_connected() && http_ping.state == IDLE) {
+                http_ping.url = "http://iot-server.glitch.me/ping";
+                xTaskCreate(task_http_get, "Trying tasks", 4096, &http_ping, 10, NULL);
             }
-            sprintf(buffer, "Button: %d", counter);
-            display_text(3, buffer);
         }
-        prevButton = button;
 
         if (!is_wifi_connected() && prevWifi) {
             display_text(0, "DISCONNECTED");
@@ -69,7 +54,6 @@ void app_main()
             display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
         }
         prevWifi = is_wifi_connected();
-        i = 0;
 
         vTaskDelay(pdMS_TO_TICKS(25));
     }

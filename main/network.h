@@ -10,10 +10,16 @@ Caller is responsible for freeing the returned memory
 */
 char* http_get(char const* url);
 
+typedef enum {
+    IDLE = 0,
+    STARTED = 1,
+    FINISHED = 2
+} CommunicationState;
+
 typedef struct {
     char* url;
     char* rs_data;
-    bool finished;
+    CommunicationState state;
 } http_rq_rs;
 // User is responsible of freeing arg
 void task_http_get(http_rq_rs* arg);
