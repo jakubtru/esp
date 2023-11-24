@@ -136,7 +136,7 @@ esp_err_t http_event_handler(esp_http_client_event_t *evt)
             break;
         case HTTP_EVENT_ON_HEADER:
             ESP_LOGD(TAG, "HTTP_EVENT_ON_HEADER");
-            printf("%.*s", evt->data_len, (char*)evt->data);
+            printf("HEADER: %.*s", evt->data_len, (char*)evt->data);
             break;
         case HTTP_EVENT_ON_DATA:
             // NOTE jesli cos nie dziala z http, moze trzeba bedzie doimplementowac obsluge chunkow
@@ -198,4 +198,12 @@ char* http_get(char const* url)
     }
 
     return http_response.buffer;
+}
+
+void task_http_get(http_rq_rs* arg)
+{
+    arg->rs_data = http_get(arg->url);
+    arg->finished = true;
+    ESP_LOGI(TAG, "Received response: %s", arg->rs_data);
+    vTaskDelete(NULL);
 }

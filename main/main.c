@@ -58,21 +58,33 @@ void app_main()
     int prevWifi = true;
     int i = 0;
     int counter = 0;
+    http_rq_rs http_ping = {
+        .url = "init",
+        .finished = false,
+    };
+    bool doing_http = false;
+
     while(1) {
         ++i;
         char buffer[20];
         int button = button_pressed();
         connected = is_wifi_connected();
 
+        if (doing_http && http_ping.finished) {
+            display_text(2, http_ping.rs_data);
+            free(http_ping.rs_data);
+            doing_http = false;
+        }
+
         if (button != prevButton) {
             if (button) {
                 ++counter;
-                // if (button && connected) {
-                //     char* response = http_get("http://192.168.137.1:3000/ping");
-                //     ESP_LOGI(TAG, "Received response: %s", response);
-                //     display_text(2, response);
-                //     free(response);
-                // }
+                if (button && connected) {
+                    http_ping.url = "http://iot-server.glitch.me/ping";
+                    http_ping.finished = false;
+                    doing_http = true;
+                    xTaskCreate(task_http_get, "Trying tasks", 4096, &http_ping, 10, NULL);
+                }
             }
             sprintf(buffer, "Button: %d", counter);
             display_text(3, buffer);
