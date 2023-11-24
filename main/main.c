@@ -43,7 +43,7 @@ void app_main()
             ESP_LOGI(TAG, "Button pressed");
             if (is_wifi_connected() && http_ping.state == IDLE) {
                 http_ping.url = "http://iot-server.glitch.me/ping";
-                xTaskCreate(task_http_get, "Trying tasks", 4096, &http_ping, 10, NULL);
+                xTaskCreate((void (*)(void*))task_http_get, "Trying tasks", 4096, &http_ping, 10, NULL);
             }
         }
 
