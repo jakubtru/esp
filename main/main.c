@@ -18,41 +18,13 @@
 
 static char const *TAG = "main";
 
-void mainloop(void);
+void init();
+void wifi_sanity_check();
 
 void app_main()
 {
-    int connected = false;
-
-    // Initialize NVS // Non Volatile Storage => storage that persists when power goes off
-	esp_err_t ret = nvs_flash_init();
-	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-		ESP_ERROR_CHECK(nvs_flash_erase());
-		ret = nvs_flash_init();
-	}
-	ESP_ERROR_CHECK(ret);
-
-    init_display();
-
-    init_button();
-
-    display_text(0, "Connecting...");
-
-	// Initialize WiFi
-	if (wifi_init_sta() != ESP_OK) {
-		ESP_LOGE(TAG, "Connection failed");
-        display_text(0, "Connection failed");
-		while(1) { vTaskDelay(1); }
-	}
-    display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
-    connected = true;
-
-    // char const* response = http_get("http://192.168.137.1:3000/ping");
-    char* response = http_get("http://example.com");
-    ESP_LOGI(TAG, "Received response: %s", response);
-    display_text(1, "Response:");
-    display_text(2, response);
-    free(response);
+    init();
+    wifi_sanity_check();
 
     int prevButton = true;
     int prevWifi = true;
@@ -68,7 +40,6 @@ void app_main()
         ++i;
         char buffer[20];
         int button = button_pressed();
-        connected = is_wifi_connected();
 
         if (doing_http && http_ping.finished) {
             display_text(2, http_ping.rs_data);
@@ -79,7 +50,7 @@ void app_main()
         if (button != prevButton) {
             if (button) {
                 ++counter;
-                if (button && connected) {
+                if (button && is_wifi_connected()) {
                     http_ping.url = "http://iot-server.glitch.me/ping";
                     http_ping.finished = false;
                     doing_http = true;
@@ -91,15 +62,47 @@ void app_main()
         }
         prevButton = button;
 
-        if (!connected && prevWifi) {
+        if (!is_wifi_connected() && prevWifi) {
             display_text(0, "DISCONNECTED");
         }
-        else if (connected && !prevWifi) {
+        else if (is_wifi_connected() && !prevWifi) {
             display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
         }
-        prevWifi = connected;
+        prevWifi = is_wifi_connected();
         i = 0;
 
         vTaskDelay(pdMS_TO_TICKS(25));
     }
+}
+
+void init()
+{
+    // Non Volatile Storage => storage that persists when power goes off
+	esp_err_t ret = nvs_flash_init();
+	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+		ESP_ERROR_CHECK(nvs_flash_erase());
+		ret = nvs_flash_init();
+	}
+	ESP_ERROR_CHECK(ret);
+
+    init_display();
+    init_button();
+
+    display_text(0, "Connecting...");
+	if (wifi_init_sta() != ESP_OK) {
+		ESP_LOGE(TAG, "Connection failed");
+        display_text(0, "Connection failed");
+		while(1) { vTaskDelay(1000); }
+	}
+    display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+}
+
+void wifi_sanity_check() {
+    const char* SANITY_URL = "http://example.com";
+    ESP_LOGI(TAG, "Performing WIFI sanity check with %s", SANITY_URL);
+    char* response = http_get(SANITY_URL);
+    ESP_LOGI(TAG, "Received response: %s", response);
+    display_text(1, "Response:");
+    display_text(2, response);
+    free(response);
 }
