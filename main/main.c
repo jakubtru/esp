@@ -67,12 +67,12 @@ void app_main()
         if (button != prevButton) {
             if (button) {
                 ++counter;
-                if (button && connected) {
-                    char* response = http_get("http://192.168.137.1:3000/ping");
-                    ESP_LOGI(TAG, "Received response: %s", response);
-                    display_text(2, response);
-                    free(response);
-                }
+                // if (button && connected) {
+                //     char* response = http_get("http://192.168.137.1:3000/ping");
+                //     ESP_LOGI(TAG, "Received response: %s", response);
+                //     display_text(2, response);
+                //     free(response);
+                // }
             }
             sprintf(buffer, "Button: %d", counter);
             display_text(3, buffer);

@@ -103,7 +103,7 @@ esp_err_t wifi_init_sta()
 
 	ESP_LOGI(TAG, "wifi_init_sta finished.");
 	ESP_LOGI(TAG, "connect to ap SSID:%s", CONFIG_ESP_WIFI_SSID);
-	vEventGroupDelete(s_wifi_event_group);
+	// vEventGroupDelete(s_wifi_event_group);
 	return ret_value;
 }
 
