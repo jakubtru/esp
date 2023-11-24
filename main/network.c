@@ -51,10 +51,18 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 	}
 }
 
-//TODO implement check that it is called only once. repeated calls would cause a memory leak on s_wifi_event_group
 esp_err_t wifi_init_sta()
 {
-	esp_err_t ret_value = ESP_OK;
+	static int initialized = false;
+    if (initialized) {
+        ESP_LOGE(TAG, "wifi_init_sta was already called");
+        while(1) {
+            vTaskDelay(1000);
+        };
+    }
+    initialized = true;
+
+    esp_err_t ret_value = ESP_OK;
 	s_wifi_event_group = xEventGroupCreate();
 
 	ESP_ERROR_CHECK(esp_netif_init());
