@@ -5,3 +5,9 @@ dependencies.lock
 .vscode
 
 examples
+main/endian.h
+.gitignore
+main/mqtt_client.h
+main/esp_wifi.h
+.gitignore
+main/sys/queue.h
