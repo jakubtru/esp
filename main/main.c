@@ -15,6 +15,10 @@
 // ADDED
 //  #include "esp_task_wdt.h"
 
+#include "mqtt_client.h"
+// ADDED
+//  #include "esp_task_wdt.h"
+
 // std libs
 #include <stdio.h>
 #include <string.h>
@@ -198,6 +202,13 @@ void init()
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
 
     init_display();
     init_button();
@@ -212,6 +223,11 @@ void init()
             vTaskDelay(1000);
         }
     }
+        while (1)
+        {
+            vTaskDelay(1000);
+        }
+    }
     display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
 }
 
@@ -219,6 +235,7 @@ void wifi_sanity_check()
 {
     const char *SANITY_URL = "http://example.com";
     ESP_LOGI(TAG, "Performing WIFI sanity check with %s", SANITY_URL);
+    char *response = http_get(SANITY_URL);
     char *response = http_get(SANITY_URL);
     ESP_LOGI(TAG, "Received response: %s", response);
     display_text(1, "Response:");
