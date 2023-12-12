@@ -34,7 +34,7 @@ static void log_error_if_nonzero(const char *message, int error_code)
     }
 }
 
-bool should_stop_mqtt = false;
+bool is_mqtt_stopped = true;
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -46,6 +46,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id)
     {
     case MQTT_EVENT_CONNECTED:
+        is_mqtt_stopped = false;
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
 
         // Publish message to the topic
@@ -53,14 +54,31 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 
         // Delay for 2sec (adjust the duration as needed)
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        //vTaskDelay(5000 / portTICK_PERIOD_MS);
 
         // Subscribe to the topic
-        msg_id = esp_mqtt_client_subscribe(client, "sensor/2", 1);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+        // msg_id = esp_mqtt_client_subscribe(client, "sensor/2", 1);
+        // ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+
+        // for (int i = 0; i < 5; i++)
+        // {
+        //     msg_id = esp_mqtt_client_publish(client, "sensor/2", "Sending info", 0, 0, 0);
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
+        
+        while(true) {
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            if(!is_mqtt_stopped) {
+                msg_id = esp_mqtt_client_publish(client, "sensor/2", "Sending info", 0, 0, 0);
+            } else {
+                break;
+            }
+        }
+
         break;
 
     case MQTT_EVENT_DISCONNECTED:
+        //is_mqtt_stopped = true;
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
         break;
 
@@ -76,10 +94,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
         msg_id = esp_mqtt_client_unsubscribe(client, "sensor/2");
         ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
-
-        // Disconnect after unsubscribing
-        
-        should_stop_mqtt = true;
         break;
 
     case MQTT_EVENT_UNSUBSCRIBED:
@@ -124,7 +138,7 @@ static void mqtt_app_start(void)
     ESP_LOGI(TAG, "STARTING MQTT");
     const esp_mqtt_client_config_t mqtt_cfg = {
         //.broker.address.uri = "mqtt://mqtt.eclipseprojects.io:1883",
-        .broker.address.uri = "mqtt://192.168.39.9",
+        .broker.address.uri = "mqtt://192.168.253.9",
         .credentials.username = mqtt_username,
         .credentials.authentication.password = mqtt_password
     };
@@ -149,14 +163,6 @@ void app_main()
 
     while (1)
     {
-        if (should_stop_mqtt) //- nie działa nie wiem jeszcze czemu
-        {
-            ESP_LOGI(TAG, "Stopping MQTT client");
-            esp_mqtt_client_disconnect(client);
-            esp_mqtt_client_stop(client);
-            should_stop_mqtt = false; // Reset the flag
-        }
-
         if (http_ping.state == FINISHED)
         {
             display_text(2, http_ping.rs_data);
@@ -176,11 +182,21 @@ void app_main()
 
         if (!is_wifi_connected() && prevWifi)
         {
+            is_mqtt_stopped = true;
+            ESP_LOGI(TAG, "Stopping MQTT client");
+            esp_mqtt_client_disconnect(client);
+            esp_mqtt_client_stop(client);
+
             display_text(0, "DISCONNECTED");
         }
         else if (is_wifi_connected() && !prevWifi)
         {
             display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
+            vTaskDelay(5000 / portTICK_PERIOD_MS); //wstrzymanie żeby na pewno flagi się dobrze ustawiły - bez tego jest lipa
+            
+            if(is_mqtt_stopped) {
+                mqtt_app_start();
+            }
         }
         prevWifi = is_wifi_connected();
 
@@ -214,8 +230,8 @@ void wifi_sanity_check() {
     const char* SANITY_URL = "http://example.com";
     ESP_LOGI(TAG, "Performing WIFI sanity check with %s", SANITY_URL);
     char* response = http_get(SANITY_URL);
-    ESP_LOGI(TAG, "Received response: %s", response);
-    display_text(1, "Response:");
-    display_text(2, response);
+    // ESP_LOGI(TAG, "Received response: %s", response);
+    // display_text(1, "Response:");
+    // display_text(2, response);
     free(response);
 }
