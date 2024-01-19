@@ -1,8 +1,6 @@
-// custom logic
 #include "oled.h"
 #include "network.h"
 #include "button.h"
-// esp libs
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_log.h"
@@ -12,10 +10,7 @@
 #include "nvs_flash.h"
 #include "mdns.h"
 #include "mqtt_client.h"
-// ADDED
-//  #include "esp_task_wdt.h"
 
-// std libs
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,7 +20,6 @@ static char const *TAG = "main";
 void init();
 void wifi_sanity_check();
 
-// my changes
 static void log_error_if_nonzero(const char *message, int error_code)
 {
     if (error_code != 0)
@@ -73,7 +67,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     case MQTT_EVENT_SUBSCRIBED:
         ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
 
-        // Publish message after subscribing
         msg_id = esp_mqtt_client_publish(client, "sensor/2", "Message after subscribing", 0, 0, 0);
         ESP_LOGI(TAG, "sent publish after subscribing successful, msg_id=%d", msg_id);
 
@@ -85,8 +78,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
 
     case MQTT_EVENT_UNSUBSCRIBED:
-        // Delay for 5sec (adjust the duration as needed)
-        // vTaskDelay(5000 / portTICK_PERIOD_MS);
         ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
         break;
 
