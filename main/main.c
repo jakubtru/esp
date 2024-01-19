@@ -30,7 +30,7 @@ static void log_error_if_nonzero(const char *message, int error_code)
 {
     if (error_code != 0)
     {
-        ESP_LOGE(TAG, "Last error %s: 0x%x", message, error_code);
+        ESP_LOGI(TAG, "Last error %s: 0x%x", message, error_code);
     }
 }
 
@@ -49,27 +49,15 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         is_mqtt_stopped = false;
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
 
-        // Publish message to the topic
-        msg_id = esp_mqtt_client_publish(client, "sensor/2", "Initial hello after connecting", 0, 0, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-
-        // Delay for 2sec (adjust the duration as needed)
-        //vTaskDelay(5000 / portTICK_PERIOD_MS);
-
-        // Subscribe to the topic
-        // msg_id = esp_mqtt_client_subscribe(client, "sensor/2", 1);
-        // ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        // for (int i = 0; i < 5; i++)
-        // {
-        //     msg_id = esp_mqtt_client_publish(client, "sensor/2", "Sending info", 0, 0, 0);
-        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
-        // }
-        
         while(true) {
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-            if(!is_mqtt_stopped) {
-                msg_id = esp_mqtt_client_publish(client, "sensor/2", "Sending info", 0, 0, 0);
+            //2 to zahardcodowane id czujnika - Pałka chciał żeby tu było ESP32_%CHIPID%
+            //Sending info -> np. "26.7 19.01.2024 16:25" ale inny format daty też może być albo bez daty 
+            if(!is_mqtt_stopped) { 
+                msg_id = esp_mqtt_client_publish(client, "sensor/temperature/2", "Sending info", 0, 0, 0);
+                ESP_LOGI(TAG, "sent publish after subscribing successful, msg_id=%d", msg_id);
+                msg_id = esp_mqtt_client_publish(client, "sensor/humidity/2", "Sending info", 0, 0, 0);
+                ESP_LOGI(TAG, "sent publish after subscribing successful, msg_id=%d", msg_id);
             } else {
                 break;
             }
@@ -78,7 +66,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
 
     case MQTT_EVENT_DISCONNECTED:
-        //is_mqtt_stopped = true;
+        is_mqtt_stopped = true;
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
         break;
 
@@ -138,7 +126,7 @@ static void mqtt_app_start(void)
     ESP_LOGI(TAG, "STARTING MQTT");
     const esp_mqtt_client_config_t mqtt_cfg = {
         //.broker.address.uri = "mqtt://mqtt.eclipseprojects.io:1883",
-        .broker.address.uri = "mqtt://192.168.253.9",
+        .broker.address.uri = "mqtt://192.168.229.9",
         .credentials.username = mqtt_username,
         .credentials.authentication.password = mqtt_password
     };
@@ -193,7 +181,6 @@ void app_main()
         {
             display_text(0, "WIFI: " CONFIG_ESP_WIFI_SSID);
             vTaskDelay(5000 / portTICK_PERIOD_MS); //wstrzymanie żeby na pewno flagi się dobrze ustawiły - bez tego jest lipa
-            
             if(is_mqtt_stopped) {
                 mqtt_app_start();
             }
